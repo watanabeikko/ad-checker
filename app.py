@@ -7,10 +7,9 @@ import requests
 import chromadb
 import pdfplumber
 import os
-import google.generativeai as genai
-from google.generativeai.types import File  # File オブジェクト使うなら
-import google.generativeai as genai
-from google.generativeai import Client
+from google import genai # ★ 変更: 新しいSDKは google.genai をインポート
+from google.genai import types # ★ 変更: typesは google.genai からインポート
+from google.genai import Client # ★ 変更: Clientは google.genai からインポート
 
 
 
@@ -32,7 +31,11 @@ if not API_KEY:
     st.error("環境変数 GOOGLE_API_KEY が設定されていません")
     st.stop()
 
-embed_client = Client(api_key=API_KEY)
+#embed_client = Client(api_key=API_KEY)変更した
+
+# ★ 変更: クライアントを一元化し、APIキーを渡すか環境変数に依存させる
+client = Client(api_key=API_KEY)
+
 
 
 # Gemini 初期化
@@ -51,52 +54,22 @@ from PIL import Image
 
 # ... img_to_b64 関数はそのまま使用 ...
 
+# 修正後のコードで、APIの直接呼び出しを止め、新しいSDKのclientを使う場合
+
 def get_image_embedding(pil_image: Image.Image):
     """
-    画像を base64 エンコードし、Gemini API (v1) の REST API を直接呼び出して
-    エンベディングベクトルを取得する
+    画像を新しい Google GenAI SDK の client.models.embed_content でエンベディングベクトルを取得する
     """
-    global API_KEY # グローバル変数 API_KEY を使用
-    
-    # 1. 画像を base64 (PNG) にエンコード
-    b64_data = img_to_b64(pil_image)
+    global client # 上記で定義したクライアントオブジェクトを使用
 
-    # 2. REST API 呼び出しのペイロードを構築
-    payload = {
-        # 🚨 マルチモーダル対応のエンベディングモデル (ドキュメントに記載あり)
-        "model": "gemini-embedding-001",
-        "content": {
-            "parts": [
-                {
-                    "inlineData": {
-                        "mimeType": "image/png",
-                        "data": b64_data
-                    }
-                }
-            ]
-        }
-    }
+    # 🚨 embed_content はテキストと画像のマルチモーダルに対応
+    result = client.models.embed_content(
+        model='gemini-embedding-001',
+        contents=[pil_image] # PIL.Imageオブジェクトをそのままcontentsに渡す
+    )
     
-    # 3. APIエンドポイントのURLを新しい v1 形式で再構築
-    # 🚨 Generative Language API ではなく、Gemini API v1 のエンドポイントを使用
-    url = f"https://generativelanguage.googleapis.com/v1/models/{payload['model']}:embedContent?key={API_KEY}"
-    
-    # 4. API呼び出しの実行
-    response = requests.post(url, json=payload)
-    
-    # 5. エラーチェック
-    if response.status_code != 200:
-        print(f"Embedding API Error: {response.status_code}")
-        # 詳細なエラーメッセージを出力
-        error_details = response.json()
-        print(error_details)
-        # 403 (権限不足) や 400 (不正なリクエスト) が出る可能性があります
-        raise Exception(f"画像エンベディングAPI呼び出し失敗: {response.status_code}")
-        
-    result = response.json()
-    
-    # 6. 結果の抽出と正規化
-    embedding_values = result["embedding"]["values"]
+    # 結果の抽出と正規化
+    embedding_values = result.embedding.values
     vec = np.array(embedding_values)
     
     # L2正規化
@@ -608,7 +581,13 @@ if user_input:
         })
 
     # Gemini 呼び出し
-    response = model.generate_content(parts)
+    #response = model.generate_content(parts)
+
+    # ★ 変更: model変数を削除し、client.models.generate_content を使用
+    response = client.models.generate_content(
+        model="gemini-2.5-pro", # モデル名はここで明示的に指定
+        contents=parts
+    )
     ai_reply = response.text
 
     # 回答表示
