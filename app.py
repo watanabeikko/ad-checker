@@ -7,9 +7,9 @@ import requests
 import chromadb
 import pdfplumber
 import os
-from google import genai # ★ 変更: 新しいSDKは google.genai をインポート
-from google.genai import types # ★ 変更: typesは google.genai からインポート
-from google.genai import Client # ★ 変更: Clientは google.genai からインポート
+# 🔽 ここが重要
+import google.generativeai as genai
+from google.generativeai import types
 
 
 
@@ -34,7 +34,7 @@ if not API_KEY:
 #embed_client = Client(api_key=API_KEY)変更した
 
 # ★ 変更: クライアントを一元化し、APIキーを渡すか環境変数に依存させる
-client = Client(api_key=API_KEY)
+genai.configure(api_key=API_KEY)
 
 
 
@@ -56,24 +56,24 @@ from PIL import Image
 
 # 修正後のコードで、APIの直接呼び出しを止め、新しいSDKのclientを使う場合
 
-def get_image_embedding(pil_image: Image.Image):
-    """
-    画像を新しい Google GenAI SDK の client.models.embed_content でエンベディングベクトルを取得する
-    """
-    global client # 上記で定義したクライアントオブジェクトを使用
+from google.generativeai import types
 
-    # 🚨 embed_content はテキストと画像のマルチモーダルに対応
-    result = client.models.embed_content(
-        model='gemini-embedding-001',
-        contents=[pil_image] # PIL.Imageオブジェクトをそのままcontentsに渡す
+def get_image_embedding(pil_img):
+    buffered = io.BytesIO()
+    pil_img.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+
+    file_data = types.FileData(
+        mime_type="image/png",
+        data=img_bytes
     )
-    
-    # 結果の抽出と正規化
-    embedding_values = result.embedding.values
-    vec = np.array(embedding_values)
-    
-    # L2正規化
-    return (vec / np.linalg.norm(vec)).tolist()
+
+    response = genai.embed_content(
+        model="models/embedding-1.5",
+        content=file_data,
+    )
+    return response["embedding"]
+
 
 
 
