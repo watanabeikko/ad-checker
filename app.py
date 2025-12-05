@@ -7,8 +7,9 @@ import requests
 import chromadb
 import pdfplumber
 import os
-from google.genai import types
-from google.genai import Client, types
+import google.generativeai as genai
+from google.generativeai.types import File  # File オブジェクト使うなら
+
 
 
 
