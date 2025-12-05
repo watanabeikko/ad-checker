@@ -3,7 +3,3 @@ google-generativeai
 Pillow
 chromadb
 pdfplumber
-base64
-io
-requests
-os
