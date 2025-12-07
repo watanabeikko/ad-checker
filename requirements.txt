@@ -1,5 +1,8 @@
 streamlit
 google-generativeai
-Pillow
 chromadb
 pdfplumber
+Pillow
+requests
+sentence-transformers
+numpy

@@ -544,11 +544,11 @@ with st.sidebar:
     if st.button("NGバナー画像を再インデックス化"):
         index_ng_banner_images()
 
-    if st.button("OKバナー画像を再インデックス化（ローカル）"):
-        index_ok_banner_images_local()
+    #if st.button("OKバナー画像を再インデックス化（ローカル）"):
+        #index_ok_banner_images_local()
 
-    if st.button("NGバナー画像を再インデックス化（ローカル）"):
-        index_ng_banner_images_local()
+    #if st.button("NGバナー画像を再インデックス化（ローカル）"):
+        #index_ng_banner_images_local()
 
 
 
