@@ -535,7 +535,6 @@ with st.sidebar:
     show_guideline_chunk = st.checkbox("参照したガイドライン原文を表示する", value=True)
 
     st.markdown("---")
-    st.caption("※将来用：NG/OKバナー類似画像検索は Drive に画像追加後に有効化予定")
 
     #ここに再インデックスを追加する
     if st.button("OKバナー画像を再インデックス化"):
