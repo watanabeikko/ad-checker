@@ -40,7 +40,7 @@ genai.configure(api_key=API_KEY)
 
 # Gemini 初期化
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel("gemini-2.5-pro")
+gemini_model = genai.GenerativeModel("gemini-2.5-pro")
 
 
 
@@ -58,21 +58,22 @@ from PIL import Image
 
 from google.generativeai import types
 
-def get_image_embedding(pil_img):
-    buffered = io.BytesIO()
-    pil_img.save(buffered, format="PNG")
-    img_bytes = buffered.getvalue()
 
-    file_data = types.FileData(
-        mime_type="image/png",
-        data=img_bytes
-    )
 
-    response = genai.embed_content(
-        model="models/embedding-1.5",
-        content=file_data,
-    )
-    return response["embedding"]
+from sentence_transformers import SentenceTransformer
+from PIL import Image
+import numpy as np
+
+# モデル読み込み（CLIP）
+clip_model = SentenceTransformer("clip-ViT-B-32")
+
+def get_image_embedding(image: Image.Image):
+    # PIL → ベクトル
+    embedding = clip_model.encode(image, convert_to_numpy=True)
+    return embedding
+
+
+
 
 
 
@@ -537,11 +538,11 @@ with st.sidebar:
     st.caption("※将来用：NG/OKバナー類似画像検索は Drive に画像追加後に有効化予定")
 
     #ここに再インデックスを追加する
-    #if st.button("OKバナー画像を再インデックス化"):
-        #index_ok_banner_images()
+    if st.button("OKバナー画像を再インデックス化"):
+        index_ok_banner_images()
 
-    #if st.button("NGバナー画像を再インデックス化"):
-        #index_ng_banner_images()
+    if st.button("NGバナー画像を再インデックス化"):
+        index_ng_banner_images()
 
     if st.button("OKバナー画像を再インデックス化（ローカル）"):
         index_ok_banner_images_local()
@@ -581,13 +582,9 @@ if user_input:
         })
 
     # Gemini 呼び出し
-    #response = model.generate_content(parts)
+    response = gemini_model.generate_content(parts)
 
-    # ★ 変更: model変数を削除し、client.models.generate_content を使用
-    response = client.models.generate_content(
-        model="gemini-2.5-pro", # モデル名はここで明示的に指定
-        contents=parts
-    )
+
     ai_reply = response.text
 
     # 回答表示
